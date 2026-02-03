@@ -1,90 +1,149 @@
 """
-WebSocket handler for multi-agent system.
+WebSocket handler for multi-agent system using LangGraph.
 """
 from fastapi import WebSocket, WebSocketDisconnect
-from app.agent.manager import ManagerAgent
+from app.agent.graph import build_graph
+from app.agent.state import AgentState
 from app.agent.logger import logger
 import json
 import uuid
+from typing import Optional
+
+
+async def stream_translation(text: str):
+    """
+    Placeholder for streaming translation.
+    Later replace with real translation model.
+    """
+    for token in text.split():
+        yield token + " "
 
 
 class MultiAgentWebSocketHandler:
     """
-    Handle WebSocket connection lifecycle with manager agent.
+    Handle WebSocket lifecycle using LangGraph-based agent system.
     """
-    
+
     def __init__(self, websocket: WebSocket):
         self.websocket = websocket
         self.connection_id = str(uuid.uuid4())[:8]
-        self.manager: ManagerAgent | None = None
-    
+        self.graph = build_graph()
+
+        # Conversation-level memory placeholder
+        self.summary_memory: list[str] = []
+
     async def handle(self):
         """
-        Main connection handler.
-        
-        Lifecycle:
+        Connection lifecycle:
         1. Accept connection
-        2. Create manager agent
-        3. Process messages
-        4. Cleanup on disconnect
+        2. Receive messages
+        3. Execute LangGraph
+        4. Stream response
+        5. Cleanup on disconnect
         """
         await self.websocket.accept()
         logger.info(f"[WS {self.connection_id}] Connection accepted")
-        
-        # Create manager instance
-        self.manager = ManagerAgent(self.connection_id)
-        
+
         try:
             while True:
-                # Receive message
                 data = await self.websocket.receive_text()
-                
+
                 try:
                     message = json.loads(data)
                     await self._handle_message(message)
-                
+
                 except json.JSONDecodeError:
                     logger.error(f"[WS {self.connection_id}] Invalid JSON")
                     await self._send_error("Invalid JSON format")
-        
+
         except WebSocketDisconnect:
             logger.info(f"[WS {self.connection_id}] Client disconnected")
-        
+
         except Exception as e:
-            logger.error(f"[WS {self.connection_id}] Error: {e}")
-        
+            logger.exception(f"[WS {self.connection_id}] Error: {e}")
+
         finally:
-            if self.manager:
-                await self.manager.cleanup()
             logger.info(f"[WS {self.connection_id}] Cleanup complete")
-    
+
     async def _handle_message(self, message: dict):
-        """Process incoming message."""
+        """
+        Process incoming WebSocket message.
+        """
         msg_type = message.get("type")
-        
-        if msg_type == "user_message":
-            content = message.get("content", "")
-            logger.info(f"[WS {self.connection_id}] User: {content[:50]}...")
-            
-            # Process through manager
-            response = await self.manager.process_message(content)
-            
-            # Send complete response (streaming can be added later)
-            await self._send_response(response)
-        
-        else:
-            logger.warning(f"[WS {self.connection_id}] Unknown type: {msg_type}")
+
+        if msg_type != "user_message":
             await self._send_error(f"Unknown message type: {msg_type}")
-    
-    async def _send_response(self, content: str):
-        """Send response to client."""
+            return
+
+        user_query = message.get("content", "").strip()
+        if not user_query:
+            await self._send_error("Empty message received")
+            return
+
+        logger.info(f"[WS {self.connection_id}] User: {user_query[:80]}")
+
+        # -----------------------------
+        # Build LangGraph State
+        # -----------------------------
+        state: AgentState = {
+            "query": user_query,
+            "context": self._build_context(),
+            "payload": message.get("payload"),
+            "route_agent": None,
+            "agent_response": None,
+            "final_response": None,
+            "summary_memory": self.summary_memory,
+        }
+
+        # -----------------------------
+        # Execute graph
+        # -----------------------------
+        result_state: AgentState = await self.graph.ainvoke(state)
+
+        agent_output: Optional[str] = result_state.get("agent_response")
+        if not agent_output:
+            await self._send_error("Agent returned empty response")
+            return
+
+        # Update memory (very naive for now)
+        self.summary_memory.append(user_query)
+
+        # -----------------------------
+        # Stream final response (translation placeholder)
+        # -----------------------------
+        await self._stream_response(agent_output)
+
+    def _build_context(self) -> Optional[str]:
+        """
+        Build a simple conversation summary.
+        Replace with summarizer later.
+        """
+        if not self.summary_memory:
+            return None
+        return " | ".join(self.summary_memory[-5:])
+
+    async def _stream_response(self, text: str):
+        """
+        Stream response token-by-token.
+        """
         await self.websocket.send_json({
-            "event": "response",
-            "content": content
+            "event": "response_start"
         })
-    
+
+        async for chunk in stream_translation(text):
+            await self.websocket.send_json({
+                "event": "stream",
+                "content": chunk
+            })
+
+        await self.websocket.send_json({
+            "event": "done"
+        })
+
     async def _send_error(self, error: str):
-        """Send error to client."""
+        """
+        Send error message to client.
+        """
         await self.websocket.send_json({
             "event": "error",
             "content": error
