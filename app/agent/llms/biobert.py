@@ -7,7 +7,7 @@ from app.agent.logger import logger
 MODEL_NAME = "emilyalsentzer/Bio_ClinicalBERT"
 # Using the local path identified earlier
 DATASET_PATH = os.path.join(os.getcwd(), "symbipredict_2022.csv")
-HF_TOKEN = "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"
+HF_TOKEN = os.getenv("HF_TOKEN")
 
 class BioBERTClassifier:
     _instance = None
