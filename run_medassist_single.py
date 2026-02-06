@@ -21,7 +21,7 @@ CACHE_DIR = os.path.join(BASE_DIR, "cache")
 
 # Model
 MODEL_NAME = "emilyalsentzer/Bio_ClinicalBERT"
-HF_TOKEN = "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"
+HF_TOKEN = os.getenv("HF_TOKEN")
 
 # Pipeline Settings
 MAX_QUESTIONS = 7
