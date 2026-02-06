@@ -24,14 +24,18 @@ Input format:
 
 Rules:
 - If the query is about appointments, scheduling, hospital visits → booking_agent
-- If the query describes health issues, symptoms, pain → symptomps_agent
+- If the query describes health issues, symptoms, pain → symptom_agent
 - Greetings, general questions → direct
 
 Return STRICT JSON ONLY:
 {
   "route_agent": "<agent_name>",
-  "querry": "<instruction for the agent including context summary>"
+  "query": "<instruction for the agent>"
 }
+Valid agent names: 'symptom_agent', 'booking_agent', 'direct_agent'.
+Use 'symptom_agent' for ANY medical, health, or symptom queries.
+Use 'booking_agent' for appointments.
+Use 'direct_agent' for greetings or general questions.
 """
 
 
@@ -49,9 +53,11 @@ class ManagerAgent:
         )
 
         result = await self.llm.complete(prompt)
+        print(f"Manager result: {result}")
         decision = json.loads(result)
-
+        
+        print(f"Manager decision: {decision}")
         state["route_agent"] = decision["route_agent"]
-        state["query"] = decision["querry"]
+        state["query"] = decision["query"]
 
         return state

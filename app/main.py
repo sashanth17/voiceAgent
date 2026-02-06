@@ -8,8 +8,9 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, WebSocket
 
 from app.ws.handler import MultiAgentWebSocketHandler
+from app.agent.llms.biobert import get_biobert_classifier
+from app.agent.llms.symptom_extractor import get_symptom_extractor
 from app.agent.logger import logger
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -18,6 +19,16 @@ async def lifespan(app: FastAPI):
     """
     logger.info("=" * 60)
     logger.info("Async AI Agent Server Starting")
+    
+    # Pre-load heavy models
+    try:
+        logger.info("Pre-loading Disease Inference Model...")
+        get_biobert_classifier()
+        logger.info("Pre-loading Symptom Extractor Model...")
+        get_symptom_extractor()
+    except Exception as e:
+        logger.error(f"Failed to load models: {e}")
+        
     logger.info("WebSocket endpoint: ws://localhost:8000/ws")
     logger.info("=" * 60)
 

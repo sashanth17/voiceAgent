@@ -35,10 +35,12 @@ class Agent:
         
         # Isolated memory (destroyed on disconnect)
         self.memory: list[dict] = []
+        self.last_symptoms = []
+        self.asked_questions_memory = []
         
         # Build a FRESH graph instance (NEVER shared)
-        graph_builder = AgentGraph()
-        self.graph = graph_builder.build()
+        from app.agent.graph import build_graph
+        self.graph = build_graph()
         
         # Track running async task for cancellation
         self.current_task: Optional[asyncio.Task] = None
@@ -62,12 +64,18 @@ class Agent:
         
         # Build initial state
         initial_state: AgentState = {
+            "query": user_message, # Ensure query is set as it's used in manager
             "user_message": user_message,
             "messages": self.memory.copy(),
             "reasoning": "",
             "final_response": "",
-            "needs_deep_analysis": False
+            "needs_deep_analysis": False,
+            "symptoms": self.last_symptoms, # Persist symptoms across turns
+            "diagnosis_probabilities": [],
+            "urgency_score": 0,
+            "asked_questions": self.asked_questions_memory # Persist asked questions
         }
+        logger.info(f"[Agent {self.connection_id}] Initial State Asked Questions: {self.asked_questions_memory}")
         
         # Execute graph asynchronously
         try:
@@ -95,6 +103,12 @@ class Agent:
         """
         # Invoke graph (async execution)
         final_state = await self.graph.ainvoke(initial_state)
+        
+        # Persist extracted symptoms for next turn
+        if final_state.get("symptoms"):
+            self.last_symptoms = final_state["symptoms"]
+        if final_state.get("asked_questions"):
+            self.asked_questions_memory = final_state["asked_questions"]
         
         # Extract final response
         response = final_state.get("final_response", "")

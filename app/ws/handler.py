@@ -42,14 +42,21 @@ class MultiAgentWebSocketHandler:
         5. Cleanup on disconnect
         """
         await self.websocket.accept()
-        logger.info(f"[WS {self.connection_id}] Connection accepted")
+        logger.info(f"[WS {self.connection_id}] CONNECTION ACCEPTED")
 
         try:
             while True:
+                logger.info(f"[WS {self.connection_id}] Waiting for message...")
                 data = await self.websocket.receive_text()
-
+                
+                logger.info("-" * 50)
+                logger.info(f"RECEIVED FROM PIEHOST: {data}")
+                logger.info("-" * 50)
+                
                 try:
+                    logger.info(f"[WS {self.connection_id}] Parsing JSON...")
                     message = json.loads(data)
+                    logger.info(f"[WS {self.connection_id}] Processing: {message}")
                     await self._handle_message(message)
 
                 except json.JSONDecodeError:
@@ -83,24 +90,43 @@ class MultiAgentWebSocketHandler:
         logger.info(f"[WS {self.connection_id}] User: {user_query[:80]}")
 
         # -----------------------------
-        # Build LangGraph State
+        # Persistence: Initialize or Update State
         # -----------------------------
-        state: AgentState = {
-            "query": user_query,
-            "context": self._build_context(),
-            "payload": message.get("payload"),
-            "route_agent": None,
-            "agent_response": None,
-            "final_response": None,
-            "summary_memory": self.summary_memory,
-        }
+        if not hasattr(self, "agent_state"):
+            self.agent_state: AgentState = {
+                "query": user_query,
+                "user_message": user_query,
+                "messages": [],
+                "context": None,
+                "payload": message.get("payload"),
+                "route_agent": None,
+                "symptoms": [],
+                "diagnosis_probabilities": [],
+                "urgency_score": 0,
+                "missing_information": None,
+                "next_step": None,
+                "asked_questions": [],
+                "agent_response": None,
+                "final_response": None,
+                "summary_memory": self.summary_memory,
+            }
+        else:
+            # Update dynamic fields for the new turn
+            self.agent_state["query"] = user_query
+            self.agent_state["user_message"] = user_query
+            self.agent_state["context"] = self._build_context()
+            self.agent_state["payload"] = message.get("payload")
 
         # -----------------------------
         # Execute graph
         # -----------------------------
-        result_state: AgentState = await self.graph.ainvoke(state)
+        # Pass the persistent state to the graph
+        result_state: AgentState = await self.graph.ainvoke(self.agent_state)
+        
+        # Update our persistent state with the graph output
+        self.agent_state.update(result_state)
 
-        agent_output: Optional[str] = result_state.get("agent_response")
+        agent_output: Optional[str] = self.agent_state.get("agent_response")
         if not agent_output:
             await self._send_error("Agent returned empty response")
             return

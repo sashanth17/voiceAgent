@@ -1,0 +1,271 @@
+C:\Users\Dhanush\Downloads\medicare\app\agent\llms\gemini.py:3: FutureWarning: 
+
+All support for the `google.generativeai` package has ended. It will no longer be receiving 
+updates or bug fixes. Please switch to the `google.genai` package as soon as possible.
+See README for more details:
+
+https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md
+
+  import google.generativeai as genai
+INFO:     Started server process [2016]
+INFO:     Waiting for application startup.
+2026-02-04 17:39:03 | INFO     | [multi_agent] | ============================================================
+2026-02-04 17:39:03 | INFO     | [multi_agent] | Async AI Agent Server Starting
+2026-02-04 17:39:03 | INFO     | [multi_agent] | WebSocket endpoint: ws://localhost:8000/ws
+2026-02-04 17:39:03 | INFO     | [multi_agent] | ============================================================
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     ('127.0.0.1', 53119) - "WebSocket /ws" [accepted]
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\logging\__init__.py", line 1103, in emit
+    stream.write(msg + self.terminator)
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+UnicodeEncodeError: 'charmap' codec can't encode character '\U0001f680' in position 49: character maps to <undefined>
+Call stack:
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\runpy.py", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\runpy.py", line 86, in _run_code
+    exec(code, run_globals)
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\uvicorn\__main__.py", line 4, in <module>
+    uvicorn.main()
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\click\core.py", line 1161, in __call__
+    return self.main(*args, **kwargs)
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\click\core.py", line 1082, in main
+    rv = self.invoke(ctx)
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\click\core.py", line 1443, in invoke
+    return ctx.invoke(self.callback, **ctx.params)
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\click\core.py", line 788, in invoke
+    return __callback(*args, **kwargs)
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\uvicorn\main.py", line 416, in main
+    run(
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\uvicorn\main.py", line 587, in run
+    server.run()
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\uvicorn\server.py", line 61, in run
+    return asyncio.run(self.serve(sockets=sockets))
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\asyncio\runners.py", line 44, in run
+    return loop.run_until_complete(main)
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\asyncio\base_events.py", line 636, in run_until_complete
+    self.run_forever()
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\asyncio\windows_events.py", line 321, in run_forever
+    super().run_forever()
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\asyncio\base_events.py", line 603, in run_forever
+    self._run_once()
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\asyncio\base_events.py", line 1906, in _run_once
+    handle._run()
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\asyncio\events.py", line 80, in _run
+    self._context.run(self._callback, *self._args)
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\uvicorn\protocols\websockets\websockets_impl.py", line 247, in run_asgi
+    result = await self.app(self.scope, self.asgi_receive, self.asgi_send)
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\uvicorn\middleware\proxy_headers.py", line 84, in __call__
+    return await self.app(scope, receive, send)
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\fastapi\applications.py", line 1106, in __call__
+    await super().__call__(scope, receive, send)
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\starlette\applications.py", line 122, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\starlette\middleware\errors.py", line 149, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\starlette\middleware\exceptions.py", line 68, in __call__
+    await self.app(scope, receive, sender)
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\fastapi\middleware\asyncexitstack.py", line 17, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\starlette\routing.py", line 718, in __call__
+    await route.handle(scope, receive, send)
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\starlette\routing.py", line 341, in handle
+    await self.app(scope, receive, send)
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\starlette\routing.py", line 82, in app
+    await func(session)
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\fastapi\routing.py", line 325, in app
+    await dependant.call(**values)
+  File "C:\Users\Dhanush\Downloads\medicare\app\main.py", line 54, in websocket_endpoint
+    await handler.handle()
+  File "C:\Users\Dhanush\Downloads\medicare\app\ws\handler.py", line 45, in handle
+    logger.info(f"\U0001f680 [WS {self.connection_id}] CONNECTION ACCEPTED")
+Message: '\U0001f680 [WS 6bddf88d] CONNECTION ACCEPTED'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\logging\__init__.py", line 1103, in emit
+    stream.write(msg + self.terminator)
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+UnicodeEncodeError: 'charmap' codec can't encode character '\u23f3' in position 49: character maps to <undefined>
+Call stack:
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\runpy.py", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\runpy.py", line 86, in _run_code
+    exec(code, run_globals)
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\uvicorn\__main__.py", line 4, in <module>
+    uvicorn.main()
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\click\core.py", line 1161, in __call__
+    return self.main(*args, **kwargs)
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\click\core.py", line 1082, in main
+    rv = self.invoke(ctx)
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\click\core.py", line 1443, in invoke
+    return ctx.invoke(self.callback, **ctx.params)
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\click\core.py", line 788, in invoke
+    return __callback(*args, **kwargs)
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\uvicorn\main.py", line 416, in main
+    run(
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\uvicorn\main.py", line 587, in run
+    server.run()
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\uvicorn\server.py", line 61, in run
+    return asyncio.run(self.serve(sockets=sockets))
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\asyncio\runners.py", line 44, in run
+    return loop.run_until_complete(main)
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\asyncio\base_events.py", line 636, in run_until_complete
+    self.run_forever()
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\asyncio\windows_events.py", line 321, in run_forever
+    super().run_forever()
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\asyncio\base_events.py", line 603, in run_forever
+    self._run_once()
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\asyncio\base_events.py", line 1906, in _run_once
+    handle._run()
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\asyncio\events.py", line 80, in _run
+    self._context.run(self._callback, *self._args)
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\uvicorn\protocols\websockets\websockets_impl.py", line 247, in run_asgi
+    result = await self.app(self.scope, self.asgi_receive, self.asgi_send)
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\uvicorn\middleware\proxy_headers.py", line 84, in __call__
+    return await self.app(scope, receive, send)
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\fastapi\applications.py", line 1106, in __call__
+    await super().__call__(scope, receive, send)
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\starlette\applications.py", line 122, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\starlette\middleware\errors.py", line 149, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\starlette\middleware\exceptions.py", line 68, in __call__
+    await self.app(scope, receive, sender)
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\fastapi\middleware\asyncexitstack.py", line 17, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\starlette\routing.py", line 718, in __call__
+    await route.handle(scope, receive, send)
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\starlette\routing.py", line 341, in handle
+    await self.app(scope, receive, send)
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\starlette\routing.py", line 82, in app
+    await func(session)
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\fastapi\routing.py", line 325, in app
+    await dependant.call(**values)
+  File "C:\Users\Dhanush\Downloads\medicare\app\main.py", line 54, in websocket_endpoint
+    await handler.handle()
+  File "C:\Users\Dhanush\Downloads\medicare\app\ws\handler.py", line 49, in handle
+    logger.info(f"\u23f3 [WS {self.connection_id}] Waiting for message...")
+Message: '\u23f3 [WS 6bddf88d] Waiting for message...'
+Arguments: ()
+INFO:     connection open
+api key: AIzaSyAI3fL39xwZUlt7hbyWFxASBOz2SUmQKvI
+2026-02-04 17:39:09 | INFO     | [multi_agent] | 
+==================================================
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\logging\__init__.py", line 1103, in emit
+    stream.write(msg + self.terminator)
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+UnicodeEncodeError: 'charmap' codec can't encode character '\U0001f4e5' in position 49: character maps to <undefined>
+Call stack:
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\runpy.py", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\runpy.py", line 86, in _run_code
+    exec(code, run_globals)
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\uvicorn\__main__.py", line 4, in <module>
+    uvicorn.main()
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\click\core.py", line 1161, in __call__
+    return self.main(*args, **kwargs)
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\click\core.py", line 1082, in main
+    rv = self.invoke(ctx)
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\click\core.py", line 1443, in invoke
+    return ctx.invoke(self.callback, **ctx.params)
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\click\core.py", line 788, in invoke
+    return __callback(*args, **kwargs)
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\uvicorn\main.py", line 416, in main
+    run(
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\uvicorn\main.py", line 587, in run
+    server.run()
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\uvicorn\server.py", line 61, in run
+    return asyncio.run(self.serve(sockets=sockets))
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\asyncio\runners.py", line 44, in run
+    return loop.run_until_complete(main)
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\asyncio\base_events.py", line 636, in run_until_complete
+    self.run_forever()
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\asyncio\windows_events.py", line 321, in run_forever
+    super().run_forever()
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\asyncio\base_events.py", line 603, in run_forever
+    self._run_once()
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\asyncio\base_events.py", line 1906, in _run_once
+    handle._run()
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\asyncio\events.py", line 80, in _run
+    self._context.run(self._callback, *self._args)
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\uvicorn\protocols\websockets\websockets_impl.py", line 247, in run_asgi
+    result = await self.app(self.scope, self.asgi_receive, self.asgi_send)
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\uvicorn\middleware\proxy_headers.py", line 84, in __call__
+    return await self.app(scope, receive, send)
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\fastapi\applications.py", line 1106, in __call__
+    await super().__call__(scope, receive, send)
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\starlette\applications.py", line 122, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\starlette\middleware\errors.py", line 149, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\starlette\middleware\exceptions.py", line 68, in __call__
+    await self.app(scope, receive, sender)
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\fastapi\middleware\asyncexitstack.py", line 17, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\starlette\routing.py", line 718, in __call__
+    await route.handle(scope, receive, send)
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\starlette\routing.py", line 341, in handle
+    await self.app(scope, receive, send)
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\starlette\routing.py", line 82, in app
+    await func(session)
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\fastapi\routing.py", line 325, in app
+    await dependant.call(**values)
+  File "C:\Users\Dhanush\Downloads\medicare\app\main.py", line 54, in websocket_endpoint
+    await handler.handle()
+  File "C:\Users\Dhanush\Downloads\medicare\app\ws\handler.py", line 53, in handle
+    logger.info(f"\U0001f4e5 RECEIVED FROM PIEHOST: {data}")
+Message: '\U0001f4e5 RECEIVED FROM PIEHOST: {"type": "user_message", "content": "test message from script"}'
+Arguments: ()
+2026-02-04 17:39:09 | INFO     | [multi_agent] | ==================================================
+
+2026-02-04 17:39:09 | INFO     | [multi_agent] | [WS 6bddf88d] Parsing JSON...
+2026-02-04 17:39:09 | INFO     | [multi_agent] | [WS 6bddf88d] Processing: {'type': 'user_message', 'content': 'test message from script'}
+2026-02-04 17:39:09 | INFO     | [multi_agent] | [WS 6bddf88d] User: test message from script
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+E0000 00:00:1770206949.492436   33848 alts_credentials.cc:93] ALTS creds ignored. Not running on GCP and untrusted ALTS is not enabled.
+2026-02-04 17:39:09 | ERROR    | [multi_agent] | [WS 6bddf88d] Error: 404 models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Traceback (most recent call last):
+  File "C:\Users\Dhanush\Downloads\medicare\app\ws\handler.py", line 60, in handle
+    await self._handle_message(message)
+  File "C:\Users\Dhanush\Downloads\medicare\app\ws\handler.py", line 108, in _handle_message
+    result_state: AgentState = await self.graph.ainvoke(state)
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\langgraph\pregel\main.py", line 3161, in ainvoke
+    async for chunk in self.astream(
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\langgraph\pregel\main.py", line 2974, in astream
+    async for _ in runner.atick(
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\langgraph\pregel\_runner.py", line 304, in atick
+    await arun_with_retry(
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\langgraph\pregel\_retry.py", line 138, in arun_with_retry
+    return await task.proc.ainvoke(task.input, config)
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\langgraph\_internal\_runnable.py", line 709, in ainvoke
+    input = await step.ainvoke(input, config, **kwargs)
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\langgraph\_internal\_runnable.py", line 473, in ainvoke
+    ret = await self.afunc(*args, **kwargs)
+  File "C:\Users\Dhanush\Downloads\medicare\app\agent\manager.py", line 51, in decide_route
+    result = await self.llm.complete(prompt)
+  File "C:\Users\Dhanush\Downloads\medicare\app\agent\llms\gemini.py", line 28, in complete
+    response = await self.model.generate_content_async(prompt)
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\google\generativeai\generative_models.py", line 385, in generate_content_async
+    response = await self._async_client.generate_content(
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\google\ai\generativelanguage_v1beta\services\generative_service\async_client.py", line 440, in generate_content
+    response = await rpc(
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\google\api_core\retry\retry_unary_async.py", line 231, in retry_wrapped_func
+    return await retry_target(
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\google\api_core\retry\retry_unary_async.py", line 163, in retry_target
+    next_sleep = _retry_error_helper(
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\google\api_core\retry\retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\google\api_core\retry\retry_unary_async.py", line 158, in retry_target
+    return await target()
+  File "C:\Users\Dhanush\AppData\Local\Programs\Python\Python310\lib\site-packages\google\api_core\grpc_helpers_async.py", line 89, in __await__
+    raise exceptions.from_grpc_error(rpc_error) from rpc_error
+google.api_core.exceptions.NotFound: 404 models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+2026-02-04 17:39:09 | INFO     | [multi_agent] | [WS 6bddf88d] Cleanup complete
