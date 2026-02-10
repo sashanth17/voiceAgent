@@ -1,17 +1,9 @@
 from app.agent.state import AgentState
 from app.agent.llms.biobert import get_biobert_classifier
-from app.agent.llms.gemini import GeminiLLM
-import json
-
-async def symptom_agent(state: AgentState) -> AgentState:
-    query = state["query"]
-    
-    # 1. Get Semantic Analysis from BioBERT
-    classifier = get_biobert_classifier()
-    predictions = classifier.predict_top_k(query, k=3)
+from app.agent.llms.hybrid_llm import HybridLLM
     
     # 2. Use LLM to format a conversational response
-    llm = GeminiLLM()
+    llm = HybridLLM()
     
     prompt = f"""
     You are a Clinical Reasoning Assistant. 

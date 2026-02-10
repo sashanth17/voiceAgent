@@ -1,5 +1,5 @@
 # app/agent/manager.py
-from app.agent.llms.gemini import GeminiLLM
+from app.agent.llms.hybrid_llm import HybridLLM
 from app.agent.state import AgentState
 import json
 
@@ -40,7 +40,7 @@ Use 'direct_agent' for greetings or general questions.
 
 
 class ManagerAgent:
-    def __init__(self, llm: GeminiLLM):
+    def __init__(self, llm: HybridLLM):
         self.llm = llm
 
     async def decide_route(self, state: AgentState) -> AgentState:

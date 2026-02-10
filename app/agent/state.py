@@ -23,6 +23,7 @@ class AgentState(TypedDict):
     missing_information: Optional[str] # Information we need to ask for
     next_step: Optional[str] # "ask", "booking", "escalate", "advice"
     asked_questions: Optional[List[str]] # Loop prevention
+    duration_context: Optional[str] # Persisted duration information (e.g., "5 days")
 
     # agent output
     agent_response: Optional[str]
@@ -32,5 +33,8 @@ class AgentState(TypedDict):
     final_response: Optional[str]
     needs_deep_analysis: Optional[bool]
 
+    # Patient Demographics & History
+    patient_info: Optional[Dict[str, Any]] # {"age": int, "gender": str, "is_pregnant": bool, "history": List[str]}
+    
     # Booking State
     booking_state: Optional[Dict[str, Any]]

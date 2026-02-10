@@ -4,9 +4,14 @@ from transformers import AutoTokenizer, AutoModel
 import os
 from app.agent.logger import logger
 
+import faiss
+import numpy as np
+import torch.nn.functional as F
+
 MODEL_NAME = "emilyalsentzer/Bio_ClinicalBERT"
 # Using the local path identified earlier
 DATASET_PATH = os.path.join(os.getcwd(), "symbipredict_2022.csv")
+CACHE_DIR = os.path.join(os.getcwd(), "cache")
 HF_TOKEN = os.getenv("HF_TOKEN")
 
 class BioBERTClassifier:
@@ -54,33 +59,66 @@ class BioBERTClassifier:
         self.tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, token=HF_TOKEN)
         self.model = AutoModel.from_pretrained(MODEL_NAME, token=HF_TOKEN)
         
-        # 4. Pre-compute Embeddings
-        logger.info("Pre-computing disease embeddings...")
-        self.disease_embeddings = self._get_embeddings(self.disease_prototypes)
+        # 4. Initialize FAISS
+        self.disease_index = None
+        self._build_or_load_index()
         self._initialized = True
         logger.info("BioBERTClassifier initialization complete.")
 
     def _get_embeddings(self, text_list):
+        """Generates Mean Pooled & Normalized embeddings."""
         inputs = self.tokenizer(text_list, padding=True, truncation=True, return_tensors="pt", max_length=128)
+        
         with torch.no_grad():
             outputs = self.model(**inputs)
-        # Use CLS token embedding
-        embeddings = outputs.last_hidden_state[:, 0, :]
-        return embeddings
+        
+        attention_mask = inputs['attention_mask']
+        token_embeddings = outputs.last_hidden_state
+        
+        input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
+        sum_embeddings = torch.sum(token_embeddings * input_mask_expanded, 1)
+        sum_mask = torch.clamp(input_mask_expanded.sum(1), min=1e-9)
+        mean_pooled = sum_embeddings / sum_mask
+        
+        normalized_embeddings = F.normalize(mean_pooled, p=2, dim=1)
+        return normalized_embeddings.cpu().numpy()
+
+    def _build_or_load_index(self):
+        if not os.path.exists(CACHE_DIR):
+            os.makedirs(CACHE_DIR)
+            
+        index_path = os.path.join(CACHE_DIR, "disease_index_v2.faiss")
+        
+        if os.path.exists(index_path):
+            logger.info("Loading Disease FAISS index...")
+            self.disease_index = faiss.read_index(index_path)
+        else:
+            logger.info("Building Disease FAISS index...")
+            embeddings = self._get_embeddings(self.disease_prototypes)
+            
+            d = embeddings.shape[1]
+            self.disease_index = faiss.IndexFlatIP(d)
+            self.disease_index.add(embeddings)
+            
+            faiss.write_index(self.disease_index, index_path)
+            logger.info(f"Disease Index built with {self.disease_index.ntotal} vectors.")
 
     def predict_top_k(self, user_input_text, k=5):
+        if not self.disease_index:
+             self._build_or_load_index()
+             
         user_embedding = self._get_embeddings([user_input_text])
-        similarities = torch.nn.functional.cosine_similarity(user_embedding, self.disease_embeddings)
-        values, indices = torch.topk(similarities, k)
+        distances, indices = self.disease_index.search(user_embedding, k)
         
         results = []
         for i in range(k):
-            idx = indices[i].item()
-            score = values[i].item()
-            results.append({
-                "disease": self.disease_names[idx],
-                "confidence": round(score, 3)
-            })
+            idx = indices[0][i]
+            score = distances[0][i]
+            if idx != -1:
+                results.append({
+                    "disease": self.disease_names[idx],
+                    "confidence": float(score)
+                })
         return results
 
     def get_symptoms_for_disease(self, disease):

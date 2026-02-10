@@ -2,7 +2,7 @@
 from langgraph.graph import StateGraph, END
 from app.agent.state import AgentState
 from app.agent.manager import ManagerAgent
-from app.agent.llms.gemini import GeminiLLM
+from app.agent.llms.hybrid_llm import HybridLLM
 from app.agent.workers.booking_agent import booking_agent
 from app.agent.workers.direct_agent import direct_agent
 from app.agent.workers.medical_worker import (
@@ -14,7 +14,7 @@ from app.agent.workers.medical_worker import (
 )
 
 def build_graph() -> StateGraph:
-    llm = GeminiLLM()
+    llm = HybridLLM()
     manager = ManagerAgent(llm)
 
     graph = StateGraph(AgentState)
