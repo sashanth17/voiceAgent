@@ -8,7 +8,47 @@ from app.agent.logger import logger
 import json
 import uuid
 from typing import Optional
+from typing import TypedDict, Optional, Dict, Any, List
 
+from pathlib import Path
+from mcp import ClientSession, StdioServerParameters
+from mcp.client.stdio import stdio_client
+from typing import Optional
+from contextlib import AsyncExitStack
+import asyncio
+class MCPClient:
+    def __init__(self):
+        # Initialize session and client objects
+        self.session: Optional[ClientSession] = None
+        self.exit_stack = AsyncExitStack()
+    async def connect_to_server(self, server_script_path: str):
+         is_python = server_script_path.endswith('.py')
+         is_js = server_script_path.endswith('.js')
+         if not (is_python or is_js):
+             raise ValueError("Server script must be a .py or .js file")
+         command = "python" if is_python else "node"
+         server_params = StdioServerParameters(
+             command=command,
+             args=[server_script_path],
+             env=None)
+         stdio_transport = await self.exit_stack.enter_async_context(stdio_client(server_params))
+         self.stdio, self.write = stdio_transport
+         self.session = await self.exit_stack.enter_async_context(ClientSession(self.stdio, self.write))
+         await self.session.initialize()
+         # List available tools
+         response = await self.session.list_tools()
+         tools = response.tools
+         print("\nConnected to server with tools:", [tool.name for tool in tools])
+    async def call_tool(self, tool_name: str, arguments: dict):
+        """
+        🔑 This is the ONLY method LangGraph nodes use
+        """
+        result = await self.session.call_tool(tool_name, arguments)
+        print(result.content[0])
+        return result.content  # important
+
+    async def close(self):
+        await self.exit_stack.aclose()
 
 async def stream_translation(text: str):
     """
@@ -109,21 +149,55 @@ class MultiAgentWebSocketHandler:
                 "agent_response": None,
                 "final_response": None,
                 "summary_memory": self.summary_memory,
+                "pincode" : None,
+                "hospital_options": None,
+                "hospital_id": None,
+                "appointment_date": None,
+                "booking_confirmed": None,
+                "final_response": None,
+                "patient_contact": "7558187099",
+                "current_flow": None  # Added for flow tracking
             }
+            # Initialize MCP client as instance attribute, NOT in state
+            self.mcp_client = MCPClient()
+            await self.mcp_client.connect_to_server("app/tools/mcp-servers/server.py")
+            
         else:
             # Update dynamic fields for the new turn
             self.agent_state["query"] = user_query
             self.agent_state["user_message"] = user_query
+            # Don't overwrite context if it's already built, or rebuild it?
+            # Rebuilding context from memory is safer.
+            self.agent_state["context"] = self._build_context()
             self.agent_state["context"] = self._build_context()
             self.agent_state["payload"] = message.get("payload")
 
         # -----------------------------
+        # Message History Update
+        # -----------------------------
+        # Append the user's message to the conversation history
+        # This is CRITICAL for agents like 'extract_intent' that look at history
+        self.agent_state.setdefault("messages", []).append({
+            "role": "user", 
+            "content": user_query
+        })
+
+        # -----------------------------
         # Execute graph
         # -----------------------------
-        # Pass the persistent state to the graph
-        result_state: AgentState = await self.graph.ainvoke(self.agent_state)
+        # Inject mcp_client into the input state at runtime
+        # This creates a shallow copy so we don't modify self.agent_state with non-serializable objects
+        input_state = self.agent_state.copy()
+        input_state["mcp_client"] = self.mcp_client
+
+        # Capture result state explicitly
+        result_state: AgentState = await self.graph.ainvoke(input_state)
         
-        # Update our persistent state with the graph output
+        # PERSIST: Update our persistent state with the graph output
+        # Filter out mcp_client if it happens to be returned (it shouldn't be in AgentState definition soon)
+        if "mcp_client" in result_state:
+            del result_state["mcp_client"]
+            
         self.agent_state.update(result_state)
 
         agent_output: Optional[str] = self.agent_state.get("agent_response")

@@ -37,4 +37,14 @@ class AgentState(TypedDict):
     patient_info: Optional[Dict[str, Any]] # {"age": int, "gender": str, "is_pregnant": bool, "history": List[str]}
     
     # Booking State
-    booking_state: Optional[Dict[str, Any]]
+    pincode: Optional[str]
+    hospital_id: Optional[int]
+    appointment_date: Optional[str]
+    booking_confirmed: Optional[bool]
+    hospital_options: Optional[List[Dict[str, Any]]]
+    patient_contact: Optional[str]
+
+    current_flow: Optional[str]  # e.g., "booking", "triage", "direct"
+    
+    # Runtime Injection
+    mcp_client: Optional[Any]

@@ -12,6 +12,10 @@ from app.agent.llms.biobert import get_biobert_classifier
 from app.agent.llms.symptom_extractor import get_symptom_extractor
 from app.agent.logger import logger
 
+import os
+
+os.environ.pop("DYLD_LIBRARY_PATH", None)
+os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """

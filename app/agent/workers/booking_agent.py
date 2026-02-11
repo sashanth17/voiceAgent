@@ -1,169 +1,211 @@
-import re
 import json
-from typing import Optional, Dict, Any, List
-from langchain.tools import tool
+import os
+import re
+import sys
+import asyncio
+from datetime import datetime
 from app.agent.state import AgentState
-from app.agent.logger import logger
+from app.agent.llms.groq import get_groq_llm
 
-# --- Tools ---
+llm=get_groq_llm()
 
-@tool
-def fetch_hospitals(pincode: str, speciality: str = "general medicine"):
-    """
-    Fetch the list of hospitals based upon the pincode and required specialization of doctor.
-    """
-    # Mock data for demonstration
-    return """
-    1: Ganga Hospital, Singanallur
-    2: ESI Hospital, Ukkadam
-    3: Government Hospital, Railway Station Road
-    """
+# --- Prompts ---
+SYSTEM_PROMPT = """
+You are an intent extraction engine for a medical booking system.
+Your ONLY task is to extract structured fields from the conversation.
+You are NOT a chat assistant. You must NOT ask questions or explain anything.
+You must output STRICT JSON ONLY.
 
-@tool("bookAppointment")
-def book_appointment_tool(hospital_id: str, patient_no: str, appointment_date: str) -> str:
-    """
-    Books an appointment using a hospital ID, phone number, and date.
-    """
-    return f"Booking Successful! Doctor Rajesh is allocated for you at the selected hospital. Your token number is 7. You will receive a call 30-45 mins prior to your appointment on {appointment_date}."
+Output MUST be a single JSON object with EXACTLY these keys:
+{
+  "pincode": string or null (6 digits),
+  "hospital_id": number or null,
+  "appointment_date": string or null (YYYY-MM-DD),
+  "booking_confirmed": boolean or null
+}
 
-# --- Helpers ---
+Rules:
+- Pincodes MUST be 6-digit strings.
+- Convert ALL number words to digits (e.g., "six one two" -> "612", "sixty" -> "60", "oh" -> "0").
+- If user says "six one two zero zero four", output "612004".
+- If multiple numbers present, prefer the one explicitly reduced to 6 digits.
+- If there are two pincodes, extract the MORE RECENT one.
+- Convert relative dates (tomorrow, etc.) to YYYY-MM-DD using current_date.
+- hospital_id must be chosen from hospital_options if provided.
+- Map "first", "1", "one" to corresponding hospital_id.
+- booking_confirmed is true ONLY if user explicitly says "yes/confirm".
+"""
 
-def extract_pincode(text: str) -> Optional[str]:
-    match = re.search(r"\b\d{6}\b", text)
-    return match.group(0) if match else None
-
-def extract_phone(text: str) -> Optional[str]:
-    # Match standard 10 digit phone numbers
-    match = re.search(r"\b\d{10}\b", text)
-    return match.group(0) if match else None
-
-def extract_number(text: str) -> Optional[int]:
-    match = re.search(r"\b(\d+)\b", text)
-    return int(match.group(1)) if match else None
-
-# --- Main Agent ---
-
-async def booking_agent(state: AgentState) -> AgentState:
-    """
-    Stateful booking agent that guides the user through fetching hospitals 
-    and booking an appointment.
-    """
-    # 1. Initialize Booking State if not exists
-    if not state.get("booking_state"):
-        state["booking_state"] = {
-            "pincode": None,
-            "phone_number": None,
-            "preferred_type": None, # "nearby" | "low_cost"
-            "hospitals": None,
-            "selected_hospital_id": None,
-            "confirmation": False,
-            "booking_result": None,
-            "appointment_date": "2024-02-15" # Default for now
-        }
-    
-    bs = state["booking_state"]
-    user_msg = (state.get("query") or "").lower().strip()
-    urgency = state.get("urgency_score", 0)
-
-    # STEP 1: PINCODE
-    if not bs.get("pincode"):
-        pincode = extract_pincode(user_msg)
-        if pincode:
-            bs["pincode"] = pincode
-            logger.info(f"Pincode extracted: {pincode}")
-        else:
-            state["agent_response"] = "Please provide your 6-digit pincode so I can find hospitals near you."
-            return state
-
-    # STEP 2: PHONE NUMBER
-    if not bs.get("phone_number"):
-        phone = extract_phone(user_msg)
-        if phone:
-            bs["phone_number"] = phone
-            logger.info(f"Phone extracted: {phone}")
-        else:
-            state["agent_response"] = "I'll need your 10-digit phone number to register the appointment."
-            return state
-
-    # STEP 3: PREFERRED TYPE (Nearby vs Low Cost)
-    if not bs.get("preferred_type"):
-        if urgency >= 70:
-            bs["preferred_type"] = "nearby"
-            logger.info("High urgency detected, defaulting to nearby hospitals.")
-        else:
-            if "near" in user_msg:
-                bs["preferred_type"] = "nearby"
-            elif "low" in user_msg or "cheap" in user_msg or "cost" in user_msg:
-                bs["preferred_type"] = "low_cost"
-            else:
-                state["agent_response"] = "Would you prefer the nearest hospital or one that is low cost?"
-                return state
-
-    # STEP 4: FETCH & LIST HOSPITALS
-    if not bs.get("hospitals"):
-        raw_output = fetch_hospitals.invoke({
-            "pincode": bs["pincode"],
+# --- Nodes ---
+def emit(text: str) -> dict:
+    return {
+        "messages": [{"role": "assistant", "content": text}],
+        "final_response": text,
+        "agent_response": text,   # 👈 REQUIRED
+    }
+async def extract_intent(state: AgentState) -> dict:
+    print("reached extract intent ")
+    messages = state.get("messages", [])[-10:]
+    print("messages : ", messages)
+    user_context = {
+        "role": "user",
+        "content": json.dumps({
+            "conversation": messages,
+            "current_date": datetime.now().strftime("%Y-%m-%d"),
+            "known_state": {
+                "pincode": state.get("pincode"),
+                "hospital_id": state.get("hospital_id"),
+                "appointment_date": state.get("appointment_date"),
+                "hospital_options": state.get("hospital_options"),
+            }
         })
+    }
 
-        hospitals = []
-        # Parse the mock string response into a clean list
-        lines = [l.strip() for l in raw_output.split("\n") if l.strip()]
-        for line in lines:
-            if ":" in line:
-                h_id, name = line.split(":", 1)
-                hospitals.append({
-                    "id": h_id.strip(),
-                    "name": name.strip()
-                })
-        
-        if not hospitals:
-            state["agent_response"] = "I couldn't find any hospitals in that area. Could you double-check the pincode?"
-            bs["pincode"] = None # Reset pincode for retry
-            return state
-
-        bs["hospitals"] = hospitals
-        options = "\n".join([f"{h['id']}. {h['name']}" for h in hospitals])
-        state["agent_response"] = f"Here are the hospitals I found in {bs['pincode']}:\n\n{options}\n\nPlease reply with the number of the hospital you'd like to select."
-        return state
-
-    # STEP 5: HOSPITAL SELECTION
-    if not bs.get("selected_hospital_id"):
-        choice = extract_number(user_msg)
-        valid_ids = [h["id"] for h in bs["hospitals"]]
-        
-        if not choice or str(choice) not in valid_ids:
-            state["agent_response"] = "That wasn't a valid selection. Please choose a hospital number from the list above."
-            return state
-
-        selected = next(h for h in bs["hospitals"] if h["id"] == str(choice))
-        bs["selected_hospital_id"] = selected["id"]
-        bs["selected_hospital_name"] = selected["name"]
-
-        state["agent_response"] = (
-            f"You've selected {selected['name']}. Shall I go ahead and book the appointment for you? (Yes/No)"
+    try:
+        response = await llm.ainvoke(
+            [{"role": "system", "content": SYSTEM_PROMPT}, user_context]
         )
-        return state
+        content = response.content
+        print("LLM RESPONSE",content)
+        
+        # Clean up markdown code blocks if present
+        if "```" in content:
+            content = re.sub(r"```json\s*", "", content)
+            content = re.sub(r"```", "", content)
 
-    # STEP 6: CONFIRMATION & FINAL ACTION
-    if not bs.get("confirmation"):
-        if "yes" in user_msg or "confirm" in user_msg or "ok" in user_msg:
-            bs["confirmation"] = True
-            
-            # Execute the tool
-            result = book_appointment_tool.invoke({
-                "hospital_id": bs["selected_hospital_id"],
-                "patient_no": bs["phone_number"],
-                "appointment_date": bs["appointment_date"]
-            })
-            
-            bs["booking_result"] = result
-            state["agent_response"] = result
-            state["final_response"] = result
-            logger.info("Booking completed successfully.")
-        elif "no" in user_msg:
-            state["agent_response"] = "No problem. I've cancelled the booking process. Let me know if you need anything else."
-            state["booking_state"] = None # Reset state
-        else:
-            state["agent_response"] = f"I'm ready to book your appointment at {bs.get('selected_hospital_name')}. Please confirm with a 'Yes' or 'No'."
-            
-    return state
+        match = re.search(r"\{.*\}", content, re.DOTALL)
+        if match:
+            content = match.group(0)
+
+        intent = json.loads(content)
+
+        updates = {}  # ⚠️ DO NOT touch final_response here
+        updates["current_flow"] = "booking" # PERSIST FLOW
+
+        if intent.get("pincode"):
+            updates["pincode"] = str(intent["pincode"])
+
+        if intent.get("hospital_id"):
+            hid = intent["hospital_id"]
+            updates["hospital_id"] = int(hid[0]) if isinstance(hid, list) else int(hid)
+
+        if intent.get("appointment_date"):
+            updates["appointment_date"] = intent["appointment_date"]
+
+        if "booking_confirmed" in intent and intent["booking_confirmed"] is not None:
+            updates["booking_confirmed"] = intent["booking_confirmed"]
+        print("updates : ", updates)
+        return updates
+
+    except Exception as e:
+        print(f"DEBUG: [extract_intent] Error: {e}")
+        return emit("I'm having trouble understanding. Could you please repeat?")
+    
+
+def decide_next_step(state: AgentState) -> str:
+    pincode = state.get("pincode")
+    hospitals = state.get("hospital_options")
+    hospital_id = state.get("hospital_id")
+    date = state.get("appointment_date")
+    confirmed = state.get("booking_confirmed")
+    
+    # If we are here, we are in booking flow
+    # This might have been set by medical agent, but ensure it stays set
+    # Note: We can't easily mutate state here in a conditional edge function in all LangGraph versions,
+    # but the node following this will run in the context where we can't miss it.
+    # Actually, specific nodes should probably set it. 
+
+    if not pincode: return "ask_pincode"
+    if not hospitals: return "fetch_hospitals"
+    if not hospital_id: return "ask_hospital_selection"
+    if not date: return "ask_appointment_date"
+    if confirmed is None: return "ask_confirmation"
+
+    return "perform_booking"
+
+async def fetch_hospitals(state: AgentState) -> dict:
+    print("reached fetch_hospitals :")
+    try:
+        res = await state["mcp_client"].call_tool(
+            "fetch_hospitals",
+            {"pincode": state["pincode"]}
+        )
+
+        raw_text = res[0].text
+        data = json.loads(raw_text)
+
+        hospitals = data.get("hospitals")
+
+        return {
+            "hospital_options": hospitals
+        }
+
+    except json.JSONDecodeError:
+        return emit("Received invalid data while fetching hospitals.")
+    except Exception as e:
+        return emit(f"Error fetching hospitals: {e}")
+    
+
+async def perform_booking(state: AgentState) -> dict:
+    try:
+        res = await state["mcp_client"].call_tool(
+            "do_booking",
+            {
+                "hospital_id": state["hospital_id"],
+                "patient_contact": state["patient_contact"],
+                "appointment_date": state["appointment_date"],
+                "urgency_score": state.get("urgency_score", 50),
+            }
+        )
+
+        raw_text = res[0].text
+        data = json.loads(raw_text)
+        docter=data.get("doctor_details")
+        if "appointment_id" in data:
+            return {
+                **emit(
+                    "Appointment booked successfully!\n\n"
+                    f"Doctor: {docter.get('doctor_name')}\n"
+                    f"Date: {data.get('appointment_date')}\n"
+                    f"Token No: {data.get('token_no')}\n"
+                    f"Appointment ID: {data.get('appointment_id')}"
+                ),
+                "booking_confirmed": True,
+            }
+
+        return {
+            **emit(f"❌ Booking failed: {data.get('message', 'Unknown error')}"),
+            "booking_confirmed": None,
+        }
+
+    except json.JSONDecodeError:
+        return emit("❌ Booking error: Invalid response format")
+    except Exception as e:
+        return emit(f"❌ Booking error: {e}")
+
+def ask_pincode(state: AgentState) -> dict:
+    return emit("Please provde  your 6-digit pincode.")
+
+
+def ask_hospital_selection(state: AgentState) -> dict:
+    hospitals = state.get("hospital_options", [])
+
+    if not hospitals:
+        return {
+            "pincode": None,
+            "hospital_options": None,
+            "hospital_id": None,
+            **emit("No hospitals found for that pincode. Please try another one."),
+        }
+
+    options = "\n".join([f"{h['id']}: {h['name']}" for h in hospitals])
+    return emit(f"Please select a hospital ID {options}")
+
+def ask_appointment_date(state: AgentState) -> dict:
+    return emit("What date would you like to book for?")
+
+def ask_confirmation(state: AgentState) -> dict:
+    return emit(
+        f"to Confirm booking for Hospital {state['hospital_id']} "
+        f"on {state['appointment_date']} say yes "
+    )

@@ -1,7 +1,7 @@
 from langchain_groq import ChatGroq
 import os
 from dotenv import load_dotenv
-load_dotenv()
+
 
 def get_groq_llm(
     model: str = "llama-3.1-8b-instant",
@@ -12,6 +12,8 @@ def get_groq_llm(
     LangChain ChatGroq LLM.
     Supports tools, streaming, LangGraph.
     """
+    load_dotenv()
+    print(os.environ.get('GROQ_API_KEY'))
     return ChatGroq(
         api_key=os.environ.get('GROQ_API_KEY'),
         model=model,

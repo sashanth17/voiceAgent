@@ -1,5 +1,11 @@
-fastapi==0.109.0
-uvicorn[standard]==0.27.0
-websockets==12.0
-langgraph==0.0.20
-langchain-core==0.1.23
+fastapi>=0.115.0
+uvicorn[standard]>=0.31.1
+websockets>=12.0
+
+langchain>=1.2.8 
+langchain-core>=1.2.8 
+langgraph>=1.0.7 
+langsmith>=0.6.0
+faiss-cpu
+transformers
+torch
